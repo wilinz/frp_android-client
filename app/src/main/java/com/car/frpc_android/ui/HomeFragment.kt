@@ -1,12 +1,19 @@
 package com.car.frpc_android.ui
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -52,6 +59,27 @@ class HomeFragment : Fragment() {
         return root
     }
 
+    private fun isNotificationPermissionGranted(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // 在低于API 33的设备上，通知权限默认是启用的
+        }
+    }
+
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+            if (ok) {
+                requireContext().startService(Intent(context, FrpcService::class.java))
+            } else {
+                Toast.makeText(requireContext(), "请允许通知权限", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    @SuppressLint("InlinedApi")
     private fun init() {
         listAdapter = FileListAdapter()
         listAdapter!!.addChildClickViewIds(R.id.iv_play, R.id.iv_delete, R.id.iv_edit)
@@ -60,7 +88,11 @@ class HomeFragment : Fragment() {
             val item = listAdapter!!.getItem(position)
             if (view.id == R.id.iv_play) {
                 if (!CommonUtils.isServiceRunning(FrpcService::class.java.name, context)) {
-                    requireContext().startService(Intent(context, FrpcService::class.java))
+                    if (isNotificationPermissionGranted(requireContext())){
+                        requireContext().startService(Intent(context, FrpcService::class.java))
+                    }else{
+                        requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 }
                 if (Frpclib.isRunning(item.uid)) {
                     Frpclib.close(item.uid)
