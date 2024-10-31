@@ -1,5 +1,6 @@
 ### [frp](https://github.com/fatedier/frp) 是一个专注于内网穿透的高性能的反向代理应用，支持 TCP、UDP、HTTP、HTTPS 等多种协议。可以将内网服务以安全、便捷的方式通过具有公网 IP 节点的中转暴露到公网。
 
+请移步至 [https://github.com/wilinz/frpc_android](https://github.com/wilinz/frpc_android)
 ### 当前frp版本号0.62.0
 ### 屏幕截图
 <img src="mdassets/1.jpg" width="350px" alt="Image 1"><img src="mdassets/2.jpg" width="350px" alt="Image 2">
