@@ -1,7 +1,10 @@
 ### [frp](https://github.com/fatedier/frp) 是一个专注于内网穿透的高性能的反向代理应用，支持 TCP、UDP、HTTP、HTTPS 等多种协议。可以将内网服务以安全、便捷的方式通过具有公网 IP 节点的中转暴露到公网。
 
 ### 当前frp版本号0.62.0
-
+### 屏幕截图
+![1.jpg](mdassets/1.jpg)
+![2.jpg](mdassets/2.jpg)
+![3.jpg](mdassets/3.jpg)
 ### 自动化编译发布apk到release方法：
 自动编译 Action 文件：[.github/workflows/android_release.yml](.github/workflows/android_release.yml)
 第一次需要在 Github 仓库-设置-Action 里面设置三个秘密：
