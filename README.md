@@ -11,7 +11,7 @@ ANDROID_KS_PASS # key 的密码
 ANDROID_KEY_ALIAS # key 的别名
 ```
 运行下面推送命令，也可以在 Github Release 手动创建
-```
+```shell
 git tag version_name
 git push --tags
 ```
