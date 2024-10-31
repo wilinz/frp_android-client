@@ -14,7 +14,7 @@ import io.reactivex.schedulers.Schedulers
 
 class TemplateActivity : AppCompatActivity() {
 
-    private val editText: CodeEditor by lazy { findViewById(R.id.toolbar) }
+    private val editText: CodeEditor by lazy { findViewById(R.id.editText) }
 
     private val toolbar: Toolbar by lazy { findViewById(R.id.toolbar) }
 
