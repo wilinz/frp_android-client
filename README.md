@@ -2,9 +2,10 @@
 
 ### 当前frp版本号0.62.0
 ### 屏幕截图
-![1.jpg](mdassets/1.jpg)
-![2.jpg](mdassets/2.jpg)
-![3.jpg](mdassets/3.jpg)
+<img src="mdassets/1.jpg" width="200px" alt="Image 1">
+<img src="mdassets/2.jpg" width="200px" alt="Image 2">
+<img src="mdassets/3.jpg" width="200px" alt="Image 3">
+
 ### 自动化编译发布apk到release方法：
 自动编译 Action 文件：[.github/workflows/android_release.yml](.github/workflows/android_release.yml)
 第一次需要在 Github 仓库-设置-Action 里面设置三个秘密：
