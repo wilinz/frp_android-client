@@ -75,7 +75,8 @@ class HomeFragment : Fragment() {
             if (ok) {
                 requireContext().startService(Intent(context, FrpcService::class.java))
             } else {
-                Toast.makeText(requireContext(), "请允许通知权限", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),
+                    getString(R.string.please_allow_notification_permissions), Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -46,5 +46,6 @@
     <string name="configDeleteConfirm">确定删除该条配置</string>
     <string name="tipServiceRunning">该配置正在运行中，请先关闭</string>
     <string name="tipWaitService">正在启动服务</string>
+    <string name="please_allow_notification_permissions">请允许通知权限</string>
 
 </resources>
