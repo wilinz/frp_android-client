@@ -12,7 +12,6 @@ android {
         versionCode 5
         versionName "0.61.0"
         multiDexEnabled true
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,13 +27,30 @@ android {
         sourceCompatibility = 17
         targetCompatibility = 17
     }
-    android.applicationVariants.all {
-        variant ->
-            variant.outputs.all {
-                outputFileName = "frpc_adnroid-v${variant.versionName}.apk"
+
+    // Define build flavors for x86 and arm combinations
+    flavorDimensions "abi"
+    productFlavors {
+        x86 {
+            dimension "abi"
+            ndk {
+                abiFilters "x86", "x86_64" // Bundle x86 and x86_64
             }
+        }
+        arm {
+            dimension "abi"
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a" // Bundle armeabi-v7a and arm64-v8a
+            }
+        }
     }
 
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def flavor = variant.productFlavors[0].name // Get the flavor name (x86 or arm)
+            outputFileName = "frpc_android-${variant.versionName}-${flavor}.apk"
+        }
+    }
 
     buildTypes {
         release {
@@ -42,12 +58,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     repositories {
         jcenter()
         flatDir {
-            dirs 'libs'   // aar目录
+            dirs 'libs'
         }
     }
+
     kotlinOptions {
         jvmTarget = '17'
     }
