@@ -3,7 +3,7 @@
 ### 当前frp版本号0.62.0
 
 ### 编译方法
-使用远程仓库的 Github Action 编译: [https://github.com/wilinz/frp](https://github.com/wilinz/frp)
+使用远程仓库的 Github Action 编译: [https://github.com/wilinz/frp-mobile-lib](https://github.com/wilinz/frp-mobile-lib)
 
 
 
