@@ -4,7 +4,7 @@
 
 ### 自动化编译发布apk到release方法：
 自动编译 Action 文件：[.github/workflows/android_release.yml](.github/workflows/android_release.yml)
-第一次需要在 Github 仓库，设置，Action 里面设置三个秘密：
+第一次需要在 Github 仓库-设置-Action 里面设置三个秘密：
 ```
 ANDROID_KEY_BASE64 # 整个 key 文件转 base64, 不用 openssl
 ANDROID_KS_PASS # key 的密码
