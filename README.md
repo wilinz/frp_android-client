@@ -2,9 +2,7 @@
 
 ### 当前frp版本号0.62.0
 ### 屏幕截图
-<img src="mdassets/1.jpg" width="200px" alt="Image 1">
-<img src="mdassets/2.jpg" width="200px" alt="Image 2">
-<img src="mdassets/3.jpg" width="200px" alt="Image 3">
+<img src="mdassets/1.jpg" width="250px" alt="Image 1"><img src="mdassets/2.jpg" width="250px" alt="Image 2"><img src="mdassets/3.jpg" width="250px" alt="Image 3">
 
 ### 自动化编译发布apk到release方法：
 自动编译 Action 文件：[.github/workflows/android_release.yml](.github/workflows/android_release.yml)
