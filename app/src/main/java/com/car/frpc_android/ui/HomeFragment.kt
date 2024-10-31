@@ -1,231 +1,226 @@
-package com.car.frpc_android.ui;
+package com.car.frpc_android.ui
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
+import android.content.Intent
+import android.os.Bundle
+import android.text.TextUtils
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.afollestad.materialdialogs.DialogAction
+import com.afollestad.materialdialogs.MaterialDialog
+import com.car.frpc_android.CommonUtils
+import com.car.frpc_android.FrpcService
+import com.car.frpc_android.R
+import com.car.frpc_android.adapter.FileListAdapter
+import com.car.frpc_android.database.AppDatabase
+import com.car.frpc_android.database.Config
+import com.chad.library.adapter.base.BaseQuickAdapter
+import com.jeremyliao.liveeventbus.LiveEventBus
+import frpclib.Frpclib
+import io.reactivex.CompletableObserver
+import io.reactivex.SingleObserver
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+class HomeFragment : Fragment() {
 
-import com.afollestad.materialdialogs.MaterialDialog;
-import com.car.frpc_android.CommonUtils;
-import com.car.frpc_android.FrpcService;
-import com.car.frpc_android.R;
-import com.car.frpc_android.adapter.FileListAdapter;
-import com.car.frpc_android.database.AppDatabase;
-import com.car.frpc_android.database.Config;
-import com.jeremyliao.liveeventbus.LiveEventBus;
+    private var _recyclerView: RecyclerView? = null
+    private val recyclerView
+        get() = _recyclerView!!
 
-import java.util.List;
+    private var _refreshView: SwipeRefreshLayout? = null
+    private val refreshView
+        get() = _refreshView!!
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
-import frpclib.Frpclib;
-import io.reactivex.CompletableObserver;
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-
-public class HomeFragment extends Fragment {
-    public static final String EVENT_UPDATE_CONFIG = "EVENT_UPDATE_CONFIG";
-    public static final String EVENT_RUNNING_ERROR = "EVENT_RUNNING_ERROR";
-
-    @BindView(R.id.recyclerView)
-    RecyclerView recyclerView;
-    @BindView(R.id.refreshView)
-    SwipeRefreshLayout refreshView;
-
-    private Unbinder bind;
-    private FileListAdapter listAdapter;
+    private var listAdapter: FileListAdapter? = null
 
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_home, container, false);
-        bind = ButterKnife.bind(this, root);
-        init();
-        return root;
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?, savedInstanceState: Bundle?
+    ): View? {
+        val root = inflater.inflate(R.layout.fragment_home, container, false)
+        _recyclerView = root.findViewById(R.id.recyclerView)
+        _refreshView = root.findViewById(R.id.refreshView)
+        init()
+        return root
     }
 
-    private void init() {
-        listAdapter = new FileListAdapter();
-        listAdapter.addChildClickViewIds(R.id.iv_play, R.id.iv_delete, R.id.iv_edit);
+    private fun init() {
+        listAdapter = FileListAdapter()
+        listAdapter!!.addChildClickViewIds(R.id.iv_play, R.id.iv_delete, R.id.iv_edit)
 
-        listAdapter.setOnItemChildClickListener((adapter, view, position) -> {
-            Config item = listAdapter.getItem(position);
-            if (view.getId() == R.id.iv_play) {
-                if (!CommonUtils.isServiceRunning(FrpcService.class.getName(), getContext())) {
-                    getContext().startService(new Intent(getContext(), FrpcService.class));
+        listAdapter!!.setOnItemChildClickListener { adapter: BaseQuickAdapter<*, *>?, view: View, position: Int ->
+            val item = listAdapter!!.getItem(position)
+            if (view.id == R.id.iv_play) {
+                if (!CommonUtils.isServiceRunning(FrpcService::class.java.name, context)) {
+                    requireContext().startService(Intent(context, FrpcService::class.java))
                 }
-                if (Frpclib.isRunning(item.getUid())) {
-                    Frpclib.close(item.getUid());
-                    item.setConnecting(false);
-                    listAdapter.notifyItemChanged(position);
-                    checkAndStopService();
-                    return;
+                if (Frpclib.isRunning(item.uid)) {
+                    Frpclib.close(item.uid)
+                    item.setConnecting(false)
+                    listAdapter!!.notifyItemChanged(position)
+                    checkAndStopService()
+                    return@setOnItemChildClickListener
                 }
-                CommonUtils.waitService(FrpcService.class.getName(), getContext())
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new CompletableObserver() {
-                            MaterialDialog progress;
+                CommonUtils.waitService(FrpcService::class.java.name, context)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(object : CompletableObserver {
+                        var progress: MaterialDialog? = null
 
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                progress = new MaterialDialog.Builder(getContext())
-                                        .content(R.string.tipWaitService)
-                                        .canceledOnTouchOutside(false)
-                                        .progress(true, 100)
-                                        .show();
+                        override fun onSubscribe(d: Disposable) {
+                            progress = MaterialDialog.Builder(context!!)
+                                .content(R.string.tipWaitService)
+                                .canceledOnTouchOutside(false)
+                                .progress(true, 100)
+                                .show()
+                        }
 
-                            }
+                        override fun onComplete() {
+                            progress!!.dismiss()
+                            LiveEventBus.get<Any>(FrpcService.INTENT_KEY_FILE)
+                                .postAcrossProcess(item.uid)
+                            item.setConnecting(true)
+                            listAdapter!!.notifyItemChanged(position)
+                        }
 
-                            @Override
-                            public void onComplete() {
-                                progress.dismiss();
-                                LiveEventBus.get(FrpcService.INTENT_KEY_FILE).postAcrossProcess(item.getUid());
-                                item.setConnecting(true);
-                                listAdapter.notifyItemChanged(position);
-
-
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-
-                            }
-                        });
-                return;
+                        override fun onError(e: Throwable) {
+                        }
+                    })
+                return@setOnItemChildClickListener
             }
 
-            if (Frpclib.isRunning(item.getUid())) {
-                Toast.makeText(getContext(), getResources().getText(R.string.tipServiceRunning), Toast.LENGTH_SHORT).show();
-                return;
+            if (Frpclib.isRunning(item.uid)) {
+                Toast.makeText(
+                    context,
+                    resources.getText(R.string.tipServiceRunning),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnItemChildClickListener
             }
-            if (view.getId() == R.id.iv_edit) {
-                editConfig(position);
-                return;
+            if (view.id == R.id.iv_edit) {
+                editConfig(position)
+                return@setOnItemChildClickListener
             }
-            if (view.getId() == R.id.iv_delete) {
-                new MaterialDialog.Builder(getContext())
-                        .title(R.string.dialogConfirmTitle)
-                        .content(R.string.configDeleteConfirm)
-                        .canceledOnTouchOutside(false)
-                        .negativeText(R.string.cancel)
-                        .positiveText(R.string.done)
-                        .onNegative((dialog, which) -> dialog.dismiss())
-                        .onPositive((dialog, which) -> deleteConfig(position))
-                        .show();
+            if (view.id == R.id.iv_delete) {
+                MaterialDialog.Builder(requireContext())
+                    .title(R.string.dialogConfirmTitle)
+                    .content(R.string.configDeleteConfirm)
+                    .canceledOnTouchOutside(false)
+                    .negativeText(R.string.cancel)
+                    .positiveText(R.string.done)
+                    .onNegative { dialog: MaterialDialog, which: DialogAction? -> dialog.dismiss() }
+                    .onPositive { dialog: MaterialDialog?, which: DialogAction? ->
+                        deleteConfig(
+                            position
+                        )
+                    }
+                    .show()
             }
-        });
-        recyclerView.setAdapter(listAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-        refreshView.setOnRefreshListener(() -> getData());
-        LiveEventBus.get(EVENT_UPDATE_CONFIG, Config.class).observe(this, config -> {
-            int position = listAdapter.getData().indexOf(config);
+        }
+        recyclerView.adapter = listAdapter
+        recyclerView.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+        refreshView.setOnRefreshListener { data }
+        LiveEventBus.get(EVENT_UPDATE_CONFIG, Config::class.java).observe(
+            this
+        ) { config: Config ->
+            val position = listAdapter!!.data.indexOf(config)
             if (position < 0) {
-                listAdapter.addData(config);
+                listAdapter!!.addData(config)
             } else {
-                listAdapter.notifyItemChanged(position);
+                listAdapter!!.notifyItemChanged(position)
             }
-        });
-        LiveEventBus.get(EVENT_RUNNING_ERROR, String.class).observe(this, uid -> {
+        }
+        LiveEventBus.get(EVENT_RUNNING_ERROR, String::class.java).observe(
+            this
+        ) { uid: String? ->
+            val position = listAdapter!!.data.indexOf(
+                Config().setUid(
+                    uid!!
+                )
+            )
+            val item = listAdapter!!.getItem(position)
+            item.setConnecting(false)
+            listAdapter!!.notifyItemChanged(position)
+            checkAndStopService()
+        }
 
-            int position = listAdapter.getData().indexOf(new Config().setUid(uid));
-            Config item = listAdapter.getItem(position);
-            item.setConnecting(false);
-            listAdapter.notifyItemChanged(position);
-            checkAndStopService();
-        });
 
-
-        recyclerView.postDelayed(this::getData, 1500);
-
+        recyclerView.postDelayed({ this.data }, 1500)
     }
 
-    private void checkAndStopService() {
+    private fun checkAndStopService() {
         if (TextUtils.isEmpty(Frpclib.getUids())) {
-            getContext().stopService(new Intent(getContext(), FrpcService.class));
+            requireContext().stopService(Intent(context, FrpcService::class.java))
         }
     }
 
 
-    private void editConfig(int position) {
-        Config item = listAdapter.getItem(position);
-        LiveEventBus.get(IniEditActivity.INTENT_EDIT_INI).post(item);
-        startActivity(new Intent(getContext(), IniEditActivity.class));
-
+    private fun editConfig(position: Int) {
+        val item = listAdapter!!.getItem(position)
+        LiveEventBus.get<Any>(IniEditActivity.INTENT_EDIT_INI).post(item)
+        startActivity(Intent(context, IniEditActivity::class.java))
     }
 
-    private void deleteConfig(int position) {
-        AppDatabase.getInstance(getContext())
+    private fun deleteConfig(position: Int) {
+        AppDatabase.getInstance(context)
+            .configDao()
+            .delete(listAdapter!!.getItem(position))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : CompletableObserver {
+                override fun onSubscribe(d: Disposable) {
+                }
+
+                override fun onComplete() {
+                    listAdapter!!.removeAt(position)
+                }
+
+                override fun onError(e: Throwable) {
+                    Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
+
+    private val data: Unit
+        get() {
+            AppDatabase.getInstance(context)
                 .configDao()
-                .delete(listAdapter.getItem(position))
+                .all
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new CompletableObserver() {
-                    @Override
-                    public void onSubscribe(@NonNull Disposable d) {
-
+                .subscribe(object : SingleObserver<List<Config?>> {
+                    override fun onSubscribe(d: Disposable) {
+                        refreshView.isRefreshing = true
                     }
 
-                    @Override
-                    public void onComplete() {
-                        listAdapter.removeAt(position);
-
+                    override fun onSuccess(configs: List<Config?>) {
+                        refreshView.isRefreshing = false
+                        listAdapter!!.setList(configs)
                     }
 
-                    @Override
-                    public void onError(@NonNull Throwable e) {
-                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-
+                    override fun onError(e: Throwable) {
+                        refreshView.isRefreshing = false
                     }
-                });
+                })
+        }
 
-    }
-
-    private void getData() {
-        AppDatabase.getInstance(getContext())
-                .configDao()
-                .getAll()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<List<Config>>() {
-                    @Override
-                    public void onSubscribe(@NonNull Disposable d) {
-                        refreshView.setRefreshing(true);
-
-                    }
-
-                    @Override
-                    public void onSuccess(@NonNull List<Config> configs) {
-                        refreshView.setRefreshing(false);
-                        listAdapter.setList(configs);
-                    }
-
-                    @Override
-                    public void onError(@NonNull Throwable e) {
-                        refreshView.setRefreshing(false);
-
-                    }
-                });
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        bind.unbind();
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _refreshView = null
+        _recyclerView = null
     }
 
 
+    companion object {
+        const val EVENT_UPDATE_CONFIG: String = "EVENT_UPDATE_CONFIG"
+        const val EVENT_RUNNING_ERROR: String = "EVENT_RUNNING_ERROR"
+    }
 }

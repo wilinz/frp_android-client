@@ -4,7 +4,8 @@
     package="com.car.frpc_android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_LOGS" />
+    <uses-permission android:name="android.permission.READ_LOGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application android:name="androidx.multidex.MultiDexApplication"
@@ -15,7 +16,8 @@
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:ignore="UnusedAttribute">
         <activity
             android:name=".ui.LogcatActivity"
             android:label="@string/title_activity_main" />
